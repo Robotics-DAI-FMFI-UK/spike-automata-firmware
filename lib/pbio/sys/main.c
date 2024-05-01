@@ -18,6 +18,16 @@
 #include "program_stop.h"
 #include <pbsys/program_stop.h>
 #include <pbsys/bluetooth.h>
+#include <pbdrv/bluetooth.h>
+
+#include <automata/automata.h>
+#include <pbio/main.h>
+
+#include <string.h>
+
+void HAL_Delay(uint32_t delay);
+bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection);
+
 
 /**
  * Initializes the PBIO library, runs custom main program, and handles shutdown.
@@ -28,10 +38,12 @@ int main(int argc, char **argv) {
 
     pbio_init();
     pbsys_init();
+    bool started = false;
 
     // Keep loading and running user programs until shutdown is requested.
     while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
 
+        /* important for later
         // Receive a program. This cancels itself on shutdown.
         static pbsys_main_program_t program;
         pbio_error_t err = pbsys_program_load_wait_command(&program);
@@ -51,11 +63,27 @@ int main(int argc, char **argv) {
         // Run the main application.
         pbsys_main_run_program(&program);
 
+        */
+
+        if //(!started &&
+           ( pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
+            if (!started) started = true;
+
+
+            char *msg = "A";
+            uint32_t size = strlen(msg);
+            pbsys_bluetooth_tx((unsigned char *)msg, &size);
+
+            start_automata();
+        }
+
+        pbio_do_one_event();
+
         // Get system back in idle state.
-        pbsys_status_clear(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
+        /*pbsys_status_clear(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
         pbsys_bluetooth_rx_set_callback(NULL);
         pbsys_program_stop_set_buttons(PBIO_BUTTON_CENTER);
-        pbio_stop_all(true);
+        pbio_stop_all(true);*/
     }
 
     // Stop system processes and save user data before we shutdown.
