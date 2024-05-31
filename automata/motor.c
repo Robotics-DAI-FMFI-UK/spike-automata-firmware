@@ -1,8 +1,8 @@
 #include "motor.h"
 
-pbio_error_t get_motor(pbio_port_id_t port_id, pbio_servo_t **device) {
+pbio_error_t get_large_motor(pbio_port_id_t port_id, pbio_servo_t **device) {
     pbdrv_legodev_dev_t *lego_device;
-    pbdrv_legodev_type_id_t id_motor = PBDRV_LEGODEV_TYPE_ID_SPIKE_M_MOTOR; //TODO ME: try PBDRV_LEGODEV_TYPE_ID_ANY_DC_MOTOR
+    pbdrv_legodev_type_id_t id_motor = PBDRV_LEGODEV_TYPE_ID_SPIKE_L_MOTOR;
     pbio_error_t err = pbdrv_legodev_get_device(port_id, &id_motor, &lego_device);
     if (PBIO_SUCCESS != err) {
         print_value("Err get lego device: ", err);
@@ -14,6 +14,66 @@ pbio_error_t get_motor(pbio_port_id_t port_id, pbio_servo_t **device) {
         return err;
     }
     err = pbio_servo_setup(*device, id_motor, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0);
+    if (PBIO_SUCCESS != err) {
+        print_value("Err servo setup: ", err);
+    }
+    return err;
+}
+
+pbio_error_t get_medium_motor(pbio_port_id_t port_id, pbio_servo_t **device) {
+    pbdrv_legodev_dev_t *lego_device;
+    pbdrv_legodev_type_id_t id_motor = PBDRV_LEGODEV_TYPE_ID_SPIKE_M_MOTOR;
+    pbio_error_t err = pbdrv_legodev_get_device(port_id, &id_motor, &lego_device);
+    if (PBIO_SUCCESS != err) {
+        print_value("Err get lego device: ", err);
+        return err;
+    }
+    err = pbio_servo_get_servo(lego_device, device);
+    if (PBIO_SUCCESS != err) {
+        print_value("Err get servo: ", err);
+        return err;
+    }
+    err = pbio_servo_setup(*device, id_motor, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0);
+    if (PBIO_SUCCESS != err) {
+        print_value("Err servo setup: ", err);
+    }
+    return err;
+}
+
+pbio_error_t get_small_motor(pbio_port_id_t port_id, pbio_servo_t **device) {
+    pbdrv_legodev_dev_t *lego_device;
+    pbdrv_legodev_type_id_t id_motor = PBDRV_LEGODEV_TYPE_ID_SPIKE_S_MOTOR;
+    pbio_error_t err = pbdrv_legodev_get_device(port_id, &id_motor, &lego_device);
+    if (PBIO_SUCCESS != err) {
+        print_value("Err get lego device: ", err);
+        return err;
+    }
+    err = pbio_servo_get_servo(lego_device, device);
+    if (PBIO_SUCCESS != err) {
+        print_value("Err get servo: ", err);
+        return err;
+    }
+    err = pbio_servo_setup(*device, id_motor, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0);
+    if (PBIO_SUCCESS != err) {
+        print_value("Err servo setup: ", err);
+    }
+    return err;
+}
+
+pbio_error_t get_motor2() {
+    pbdrv_legodev_dev_t *lego_device;
+    pbdrv_legodev_type_id_t id_motor = PBDRV_LEGODEV_TYPE_ID_SPIKE_M_MOTOR;
+    pbio_error_t err = pbdrv_legodev_get_device(*((pbio_port_id_t *) parameters[1]), &id_motor, &lego_device);
+    if (PBIO_SUCCESS != err) {
+        print_value("Err get lego device: ", err);
+        return err;
+    }
+    err = pbio_servo_get_servo(lego_device, (pbio_servo_t **) &parameters[0]);
+    if (PBIO_SUCCESS != err) {
+        print_value("Err get servo: ", err);
+        return err;
+    }
+    err = pbio_servo_setup((pbio_servo_t *) parameters[0], id_motor, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0);
     if (PBIO_SUCCESS != err) {
         print_value("Err servo setup: ", err);
     }
@@ -102,15 +162,18 @@ pbio_error_t base_run_forever_different(pbio_drivebase_t *base, int32_t left_spe
     return err;
 }
 
-pbio_error_t base_run_time_different(pbio_drivebase_t *base, int32_t left_speed, int32_t right_speed, int32_t duration) {
-    pbio_error_t err = pbio_drivebase_spike_drive_time(base, left_speed, right_speed, duration, PBIO_CONTROL_ON_COMPLETION_BRAKE);  //is light because of Define
+pbio_error_t
+base_run_time_different(pbio_drivebase_t *base, int32_t left_speed, int32_t right_speed, int32_t duration) {
+    pbio_error_t err = pbio_drivebase_spike_drive_time(base, left_speed, right_speed, duration,
+                                                       PBIO_CONTROL_ON_COMPLETION_BRAKE);  //is light because of Define
     if (PBIO_SUCCESS != err)
         print_value("Err base_run_time_different: ", err);
     return err;
 }
 
 pbio_error_t base_run_angle_different(pbio_drivebase_t *base, int32_t left_speed, int32_t right_speed, int32_t angle) {
-    pbio_error_t err = pbio_drivebase_spike_drive_angle(base, left_speed, right_speed, angle, PBIO_CONTROL_ON_COMPLETION_BRAKE); //is light because of Define
+    pbio_error_t err = pbio_drivebase_spike_drive_angle(base, left_speed, right_speed, angle,
+                                                        PBIO_CONTROL_ON_COMPLETION_BRAKE); //is light because of Define
     if (PBIO_SUCCESS != err)
         print_value("Err base_run_angle_different: ", err);
     return err;

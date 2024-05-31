@@ -239,6 +239,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	../../automata/sensors.c \
 	../../automata/motor.c \
 	../../automata/modules.c \
+	../../automata/parameters.c \
 	)
 
 # MicroPython math library

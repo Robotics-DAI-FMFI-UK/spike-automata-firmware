@@ -1,7 +1,10 @@
+#pragma once
+
 #include "print.h"
 #include "sensors.h"
 #include "motor.h"
 #include "modules.h"
+#include "parameters.h"
 
 // implemented:
 void do_events(void);

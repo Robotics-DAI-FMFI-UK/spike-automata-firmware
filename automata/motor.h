@@ -1,3 +1,5 @@
+#pragma once
+
 #include <unistd.h>
 #include <contiki.h>
 
@@ -13,13 +15,18 @@
 #include <pbdrv/legodev.h>
 
 #include "print.h"
+#include "parameters.h"
 
 /**
  * Getting instance of motor.
  * @param port_id is hub port with plugged motor.
  * @param [out] device is pointer, where the motor will be initialize.
  */
-pbio_error_t get_motor(pbio_port_id_t port_id, pbio_servo_t **device); //TODO ME: look inside
+pbio_error_t get_large_motor(pbio_port_id_t port_id, pbio_servo_t **device);
+pbio_error_t get_medium_motor(pbio_port_id_t port_id, pbio_servo_t **device);
+pbio_error_t get_small_motor(pbio_port_id_t port_id, pbio_servo_t **device);
+
+pbio_error_t get_motor2();
 
 /**
  * Getting status about motor.

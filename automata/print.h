@@ -1,6 +1,10 @@
+#pragma once
+
 #include <pbdrv/bluetooth.h>
 
 #include <pbsys/bluetooth.h>
+
+#include "parameters.h"
 
 void print_message(const char *message);
 

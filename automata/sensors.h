@@ -1,8 +1,11 @@
+#pragma once
+
 #include <unistd.h>
 
 #include <pbdrv/legodev.h>
 
 #include "print.h"
+#include "parameters.h"
 
 /**
  * Getting instance of distance sensor.
@@ -15,6 +18,8 @@ pbio_error_t get_distance_sensor(pbio_port_id_t port_id, pbdrv_legodev_dev_t **d
  * @param [out] data is pointer on 1x int16_t data.
  */
 pbio_error_t get_low_distance_data(pbdrv_legodev_dev_t *device, void **data);
+
+pbio_error_t get_distance_data();
 
 /**
  * @param [out] data is pointer on 1x int16_t data.

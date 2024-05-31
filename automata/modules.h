@@ -1,13 +1,16 @@
 #include <unistd.h>
+#pragma once
 
 #include <pbdrv/legodev.h>
 #include <pbdrv/sound.h>
+#include <pbdrv/button.h>
 
 #include <pbio/geometry.h>
 #include <pbio/light_matrix.h>
 #include <pbio/imu.h>
 
 #include "print.h"
+#include "parameters.h"
 
 pbio_error_t matrix_clear(pbio_light_matrix_t *light_matrix);
 
@@ -63,3 +66,5 @@ void gyro_get_axis_rotation(pbio_geometry_xyz_t *geo, float *input);
 void gyro_init(void);
 
 bool gyro_is_ready(void);
+
+pbio_error_t button_pressed(pbio_button_flags_t *pressed);

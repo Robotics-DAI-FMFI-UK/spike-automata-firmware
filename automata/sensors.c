@@ -15,6 +15,14 @@ pbio_error_t get_low_distance_data(pbdrv_legodev_dev_t *device, void **data) {
     return err;
 }
 
+pbio_error_t get_distance_data() {
+    pbdrv_legodev_dev_t *device = (pbdrv_legodev_dev_t *)parameters[0];
+    pbio_error_t err = pbdrv_legodev_get_data(device, PBDRV_LEGODEV_MODE_PUP_ULTRASONIC_SENSOR__DISTL, &parameters[1]);
+    if (PBIO_SUCCESS != err)
+        print_value("Err get_low_distance_data: ", err);
+    return err;
+}
+
 pbio_error_t get_high_distance_data(pbdrv_legodev_dev_t *device, void **data) {
     pbio_error_t err = pbdrv_legodev_get_data(device, PBDRV_LEGODEV_MODE_PUP_ULTRASONIC_SENSOR__DISTS, data);
     if (PBIO_SUCCESS != err)

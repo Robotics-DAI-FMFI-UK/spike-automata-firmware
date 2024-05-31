@@ -68,3 +68,10 @@ void gyro_init(void) {
 bool gyro_is_ready(void) {
     return pbio_imu_is_ready();
 }
+
+pbio_error_t button_pressed(pbio_button_flags_t *pressed){ //L16,M32,R64,Bluetooth512
+    pbio_error_t err = pbdrv_button_is_pressed(pressed);
+    if (err != PBIO_SUCCESS)
+        print_value("Err button_pressed: ", err);
+    return err;
+}
