@@ -18,80 +18,171 @@
 #include "parameters.h"
 
 /**
- * Getting instance of motor.
- * @param port_id is hub port with plugged motor.
- * @param [out] device is pointer, where the motor will be initialize.
+ * Setup large motor.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in] parameters_3 is pointer to pbio_servo_t *motor.
+ * <br><br> [in] parameters_4 is pointer to pbio_direction_t *direction.
  */
-pbio_error_t get_large_motor(pbio_port_id_t port_id, pbio_servo_t **device);
-pbio_error_t get_medium_motor(pbio_port_id_t port_id, pbio_servo_t **device);
-pbio_error_t get_small_motor(pbio_port_id_t port_id, pbio_servo_t **device);
+void motor_large_setup();
 
-pbio_error_t get_motor2();
+/**
+ * Setup medium motor.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in] parameters_3 is pointer to pbio_servo_t *motor.
+ * <br><br> [in] parameters_4 is pointer to pbio_direction_t *direction.
+
+ */
+void motor_medium_setup();
+
+/**
+ * Setup small motor.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in] parameters_3 is pointer to pbio_servo_t *motor.
+ * <br><br> [in] parameters_4 is pointer to pbio_direction_t *direction.
+ */
+void motor_small_setup();
+
+/**
+ * Getting instance of large motor.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to pbio_servo_t *motor.
+ * <br><br> [in] parameters_3 is pointer to pbio_port_id_t *port_id.
+ */
+void get_large_motor();
+
+/**
+ * Getting instance of medium motor.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to pbio_servo_t *motor.
+ * <br><br> [in] parameters_3 is pointer to pbio_port_id_t *port_id.
+ */
+void get_medium_motor();
+
+/**
+ * Getting instance of small motor.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to pbio_servo_t *motor.
+ * <br><br> [in] parameters_3 is pointer to pbio_port_id_t *port_id.
+ */
+void get_small_motor();
 
 /**
  * Getting status about motor.
- * @param [out] angle is pointer, where the motor angle will be initialize.
- * @param [out] speed is pointer, where the motor speed will be initialize.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in, out] parameters_1 is pointer to int32_t *angle [deg].
+ * <br><br> [in, out] parameters_2 is pointer to int32_t *speed [deg/s].
+ * <br><br> [in] parameters_3 is pointer to pbio_servo_t *motor.
  */
-pbio_error_t motor_get_status(pbio_servo_t *device, int32_t *angle, int32_t *speed); //TODO ME: need to be tested
-
-pbio_error_t motor_run_time(pbio_servo_t *device, int32_t speed, int32_t milliseconds);
-
-pbio_error_t motor_run_forever(pbio_servo_t *device, int32_t speed);
-
-pbio_error_t motor_stop(pbio_servo_t *device);
+void motor_get_status();
 
 /**
- * @param speed in deg/s.
- * @param angle is target.
+ * Run the motor for the time.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in] parameters_3 is pointer to pbio_servo_t *motor.
+ * <br><br> [in] parameters_4 is pointer to int32_t *speed [deg/s].
+ * <br><br> [in] parameters_5 is pointer to int32_t *time [ms].
  */
-pbio_error_t motor_run_angle(pbio_servo_t *device, int32_t speed, int32_t angle);
+void motor_run_time();
 
 /**
- * Getting instance of robot with two motors.
- * @param [out] base is pointer, where the robot will be initialize.
- * @param left is left motor.
- * @param right is right motor.
-*/
-pbio_error_t get_base(pbio_drivebase_t **base, pbio_servo_t *left, pbio_servo_t *right);
-
-bool base_is_done(pbio_drivebase_t *drive);
+ * Run the motor forever.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in] parameters_3 is pointer to pbio_servo_t *motor.
+ * <br><br> [in] parameters_4 is pointer to int32_t *speed [deg/s].
+ */
+void motor_run_forever();
 
 /**
- * @param speed in mm/s.
- * @param angle in deg/s.
+ * Run the motor for the angle.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in] parameters_3 is pointer to pbio_servo_t *motor.
+ * <br><br> [in] parameters_4 is pointer to int32_t *speed [deg/s].
+ * <br><br> [in] parameters_5 is pointer to int32_t *angle [deg].
  */
-pbio_error_t base_run_forever(pbio_drivebase_t *base, int32_t speed, int32_t angle);
-
-pbio_error_t base_stop(pbio_drivebase_t *base);
-
-/**
- * @param distance in mm is target.
- */
-pbio_error_t base_run_distance(pbio_drivebase_t *base, int32_t distance);
+void motor_run_angle();
 
 /**
- * @param radius in mm is target.
- * @param angle in deg is speed of turning.
+ * Stop motor.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in] parameters_3 is pointer to pbio_servo_t *motor.
  */
-pbio_error_t base_run_angle(pbio_drivebase_t *base, int32_t radius, int32_t angle);  //TODO ME: test it if it run angle
+void motor_stop();
 
 /**
- * @param left_speed in deg/s.
- * @param right_speed in deg/s.
+ * Getting instance of drive base.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to pbio_drivebase_t *drive.
+ * <br><br> [in] parameters_3 is pointer to pbio_servo_t *left_motor.
+ * <br><br> [in] parameters_4 is pointer to pbio_servo_t *right_motor.
  */
-pbio_error_t base_run_forever_different(pbio_drivebase_t *base, int32_t left_speed, int32_t right_speed);
+void get_base();
 
 /**
- * @param left_speed in deg/s.
- * @param right_speed in deg/s.
- * @param duration in ms.
+ * Getting bool if drive base is done.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in] parameters_1 is pointer to bool *done.
+ * <br><br> [in] parameters_3 is pointer to pbio_drivebase_t *drive_base.
  */
-pbio_error_t base_run_time_different(pbio_drivebase_t *base, int32_t left_speed, int32_t right_speed, int32_t duration);
+void base_is_done();
 
 /**
- * @param left_speed in deg/s.
- * @param right_speed in deg/s.
- * @param angle in deg, that the fast motor should travel.
+ * Run the drive base forever.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in] parameters_3 is pointer to pbio_drivebase_t *drive_base.
+ * <br><br> [in] parameters_4 is pointer to int32_t *speed [mm/s].
+ * <br><br> [in] parameters_5 is pointer to int32_t *turn_rate_angle [deg/s].
  */
-pbio_error_t base_run_angle_different(pbio_drivebase_t *base, int32_t left_speed, int32_t right_speed, int32_t angle);
+void base_run_forever();
+
+/**
+ * Stop the drive base.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in] parameters_3 is pointer to pbio_drivebase_t *drive_base.
+ */
+void base_stop();
+
+/**
+ * Run the drive base for the distance.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in] parameters_3 is pointer to pbio_drivebase_t *drive_base.
+ * <br><br> [in] parameters_4 is pointer to int32_t *distance [mm].
+ */
+void base_run_distance();
+
+/**
+ * Run the drive base for the angle.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in] parameters_3 is pointer to pbio_drivebase_t *drive_base.
+ * <br><br> [in] parameters_4 is pointer to int32_t *radius [mm].
+ * <br><br> [in] parameters_5 is pointer to int32_t *angle [deg].
+ */
+void base_run_angle();
+
+/**
+ * Run the drive base forever with different speed.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in] parameters_3 is pointer to pbio_drivebase_t *drive_base.
+ * <br><br> [in] parameters_4 is pointer to int32_t *left_speed [deg/s].
+ * <br><br> [in] parameters_5 is pointer to int32_t *right_speed [deg/s].
+ */
+void base_run_forever_different();
+
+/**
+ * Run the drive base time with different speed.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in] parameters_3 is pointer to pbio_drivebase_t *drive_base.
+ * <br><br> [in] parameters_4 is pointer to int32_t *left_speed [deg/s].
+ * <br><br> [in] parameters_5 is pointer to int32_t *right_speed [deg/s].
+ * <br><br> [in] parameters_6 is pointer to int32_t *time [ms].
+ */
+void base_run_time_different();
+
+/**
+ * Run the drive base with different speed until faster motor travel angle.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [in] parameters_3 is pointer to pbio_drivebase_t *drive_base.
+ * <br><br> [in] parameters_4 is pointer to int32_t *left_speed [deg/s].
+ * <br><br> [in] parameters_5 is pointer to int32_t *right_speed [deg/s].
+ * <br><br> [in] parameters_6 is pointer to int32_t *angle_of_faster_motor [deg].
+ */
+void base_run_angle_different();

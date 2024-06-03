@@ -4,79 +4,108 @@
 
 #include <pbdrv/legodev.h>
 
-#include "print.h"
-#include "parameters.h"
+#include "automata.h"
 
 /**
- * Getting instance of distance sensor.
- * @param port_id is hub port with plugged sensor.
- * @param [out] device is pointer, where the sensor will be initialize.
+ * Getting instance of the distance sensor.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to pbdrv_legodev_dev_t *sensor.
+ * <br><br> [in] parameters_3 is pointer to pbio_port_id_t *port_id.
  */
-pbio_error_t get_distance_sensor(pbio_port_id_t port_id, pbdrv_legodev_dev_t **device);
+void get_distance_sensor();
 
 /**
- * @param [out] data is pointer on 1x int16_t data.
+ * Getting low data of the distance.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to void *data [1xint16_t].
+ * <br><br> [in] parameters_3 is pointer to pbdrv_legodev_dev_t *sensor.
  */
-pbio_error_t get_low_distance_data(pbdrv_legodev_dev_t *device, void **data);
-
-pbio_error_t get_distance_data();
-
-/**
- * @param [out] data is pointer on 1x int16_t data.
- */
-pbio_error_t get_high_distance_data(pbdrv_legodev_dev_t *device, void **data);
+void get_low_distance_data();
 
 /**
- * @param [out] data is pointer on 1x int16_t data.
+ * Getting high data of the distance.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to void *data [1xint16_t].
+ * <br><br> [in] parameters_3 is pointer to pbdrv_legodev_dev_t *sensor.
  */
-pbio_error_t get_single_distance_data(pbdrv_legodev_dev_t *device, void **data);
+void get_high_distance_data();
 
 /**
- * Getting instance of force sensor.
- * @param port_id is hub port with plugged sensor.
- * @param [out] device is pointer, where the sensor will be initialize.
+ * Getting single data of the distance.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to void *data [1xint16_t].
+ * <br><br> [in] parameters_3 is pointer to pbdrv_legodev_dev_t *sensor.
  */
-pbio_error_t get_force_sensor(pbio_port_id_t port_id, pbdrv_legodev_dev_t **device);
+void get_single_distance_data();
 
 /**
- * @param [out] data is pointer on 1x int16_t data.
+ * Getting instance of the force sensor.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to pbdrv_legodev_dev_t *sensor.
+ * <br><br> [in] parameters_3 is pointer to pbio_port_id_t *port_id.
  */
-pbio_error_t get_raw_force_data(pbdrv_legodev_dev_t *device, void **data);
+void get_force_sensor();
 
 /**
- * Getting instance of color sensor.
- * @param port_id is hub port with plugged sensor.
- * @param [out] device is pointer, where the sensor will be initialize.
+ * Getting raw data of the distance.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to void *data [1xint16_t].
+ * <br><br> [in] parameters_3 is pointer to pbdrv_legodev_dev_t *sensor.
  */
-pbio_error_t get_color_sensor(pbio_port_id_t port_id, pbdrv_legodev_dev_t **device);
+void get_raw_force_data();
 
 /**
- * color enum is in SPIKE Prime documentations
- * @param [out] data is pointer on 1x int8_t data.
+ * Getting instance of the color sensor.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to pbdrv_legodev_dev_t *sensor.
+ * <br><br> [in] parameters_3 is pointer to pbio_port_id_t *port_id.
  */
-pbio_error_t get_color_data(pbdrv_legodev_dev_t *device, void **data);
+void get_color_sensor();
 
 /**
- * @param [out] data is pointer on 1x int8_t data.
+ * Getting color data of the distance.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to void *data [1xint8_t] (color enum is in SPIKE Prime documentations).
+ * <br><br> [in] parameters_3 is pointer to pbdrv_legodev_dev_t *sensor.
  */
-pbio_error_t get_reflection_data(pbdrv_legodev_dev_t *device, void **data);
+void get_color_data();
 
 /**
- * @param [out] data is pointer on 1x int8_t data.
+ * Getting reflection data of the distance.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to void *data [1xint8_t].
+ * <br><br> [in] parameters_3 is pointer to pbdrv_legodev_dev_t *sensor.
  */
-pbio_error_t get_ambient_data(pbdrv_legodev_dev_t *device, void **data);
+void get_reflection_data();
 
 /**
- * @param [out] data is pointer on 4x int16_t data.
+ * Getting ambient data of the distance.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to void *data [1xint8_t].
+ * <br><br> [in] parameters_3 is pointer to pbdrv_legodev_dev_t *sensor.
  */
-pbio_error_t get_rgb_data(pbdrv_legodev_dev_t *device, void **data);
+void get_ambient_data();
 
 /**
- * @param [out] data is pointer on 3x int16_t data.
+ * Getting rgb data of the distance.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to void *data [4xint16_t].
+ * <br><br> [in] parameters_3 is pointer to pbdrv_legodev_dev_t *sensor.
  */
-pbio_error_t get_hsv_data(pbdrv_legodev_dev_t *device, void **data);
+void get_rgb_data();
 
 /**
- * @param [out] data is pointer on 4x int16_t data.
+ * Getting hsv data of the distance.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to void *data [3xint16_t].
+ * <br><br> [in] parameters_3 is pointer to pbdrv_legodev_dev_t *sensor.
  */
-pbio_error_t get_scaled_hsv_data(pbdrv_legodev_dev_t *device, void **data);
+void get_hsv_data();
+
+/**
+ * Getting scaled hsv data of the distance.
+ * <br><br> parameters_0 is pointer to pbio_error_t *error_code.
+ * <br><br> [out] parameters_1 is pointer to void *data [4xint16_t].
+ * <br><br> [in] parameters_3 is pointer to pbdrv_legodev_dev_t *sensor.
+ */
+void get_scaled_hsv_data();

@@ -1,30 +1,9 @@
-#include <unistd.h>
-#include <time.h>
-#include <string.h>
-#include <contiki.h>
-
-#include <pbdrv/counter.h>
-#include <pbdrv/legodev.h>
-#include <pbdrv/sound.h>
-
-#include <pbio/angle.h>
-#include <pbio/int_math.h>
-#include <pbio/observer.h>
-#include <pbio/parent.h>
-#include <pbio/servo.h>
-#include <pbio/light_matrix.h>
-#include <pbio/geometry.h>
-#include <pbio/imu.h>
-
-#include <pbsys/light.h>
-
 #include "automata.h"
 
 //  predefine:
 uint32_t pbdrv_clock_get_ms(void);
 
 void pb_color_map_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv);
-
 
 // implemented:
 void do_events(void) {
@@ -41,89 +20,601 @@ void delay(int milliseconds) {
     }
 }
 
+bool end() {
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED)
+        || pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)
+        || *(pbio_error_t *) parameters[0] != PBIO_SUCCESS)
+        return true;
+    return false;
+}
+
+// used in code
+//    pbsys_hub_light_matrix; // pointer to matrix
+
+int debug_mode = 0;
+
 int start_automata(void) {
-    static int initialized = 0;
-    static int read = 0;
-
-//     importatnt with initialization
-//    pbsys_hub_light_matrix; // exposed internal pointer
-//    pbio_imu_init(); // void
-//    pbio_imu_is_ready() // bool
-
-//    static pbdrv_legodev_dev_t *legodev_ultra;
-//    static pbdrv_legodev_dev_t *legodev_color;
-//    static pbdrv_legodev_dev_t *legodev_force;
-    static pbio_servo_t *srv;
-    static pbio_servo_t *motor;
-    static pbio_port_id_t port;
-//    pbio_error_t err;
+    pbio_error_t err = PBIO_SUCCESS;
+    parameters[0] = &err;
     do_events();
-    if (!initialized) {
-        if (!read) {
-            pbsys_bluetooth_rx();
-            return 0;
+
+    while (!end()) {
+        delay(200);
+        uint8_t data[10];
+        uint32_t size = 10;
+        pbsys_bluetooth_rx(data, &size);
+        if (size > 0) {
+            char message[size + 1];
+            strcpy(message, (char *) data);
+            message[1] = '\0';
+            parameters[10] = message;
+            print_message();
+            switch (message[0]) {
+                case '0':
+                    parameters[10] = "Starting follow automata...";
+                    print_message();
+                    follow();
+                    break;
+                case '1':
+                    parameters[10] = "Starting discover automata...";
+                    print_message();
+                    discover();
+                    break;
+                case '2':
+                    parameters[10] = "Starting tilt automata...";
+                    print_message();
+                    tilt();
+                    break;
+                case 'd':
+                    if (debug_mode == 0) {
+                        parameters[10] = "Debug mode on.";
+                        debug_mode++;
+                    } else if (debug_mode == 1) {
+                        parameters[10] = "Debug mode off.";
+                        debug_mode--;
+                    }
+                    print_message();
+                    break;
+                default:
+                    parameters[10] = "Unspecified code...";
+                    print_message();
+            }
         }
-        port = PBIO_PORT_ID_D;
-        initialized = 1;
-        get_medium_motor(PBIO_PORT_ID_B, &srv);
-        print_message("first motor");
-        do_events();
-//        get_medium_motor(PBIO_PORT_ID_D, &motor);
-        parameters[1] = &port;
-        parameters[0] = motor;
-        do_events();
-        get_motor2();
-        do_events();
-        print_message("second motor");
-        motor = parameters[0];
     }
-    do_events();
-    motor_run_angle(srv, 500, 360);
-    motor_run_angle(motor, 250, 360);
-    pbio_button_flags_t flag = 0;
-    button_pressed(&flag);
-    print_value("pressed ", flag);
-    delay(4000);
-//    int32_t angle = 0;
-//    int32_t speed = 0;
-//    motor_get_status(srv, &angle, &speed);
-//    do_events();
-//    print_value("Angle: ", angle);
-//    print_value("Speed: ", speed);
-//    print_message("first start");
-//    motor_run_forever(motor, 500);
-//    print_message("first end");
-//    print_message("second start");
-//    motor_run_forever(srv, -500);
-//    print_message("second end");
-//    delay(1000);
-//    print_message("first start");
-//    motor_stop(motor);
-//    print_message("first end");
-//    delay(1000);
-//    print_message("second start");
-//    motor_stop(srv);
-//    print_message("second end");
-//    delay(1000);
 
-    uint32_t current_time = pbdrv_clock_get_ms();
-    print_value("time: ", current_time);
-
-    do_events();
     return 0;
 }
 
-//#include <glib.h>
+/**
+ * states:<br>
+ * 0 => middle<br>
+ * 1 => right<br>
+ * -1 => left<br>
+ * 2 => up<br>
+ * -2 => down
+ */
+void tilt() {
+    /**
+     * 0 => middle<br>
+     * 1 => right<br>
+     * -1 => left<br>
+     * 2 => up<br>
+     * -2 => down
+     */
+    int state = 0;
+    int32_t x = 2;
+    int32_t y = 2;
+    int32_t bright = 100;
+    uint32_t last_print = 0;
+    parameters[3] = pbsys_hub_light_matrix;
+    matrix_clear();
+    if (end()) {
+        parameters[10] = "Exit tilt because matrix_clear: ";
+        print_error();
+        return;
+    }
+    do_events();
+
+    parameters[4] = &x;
+    parameters[5] = &y;
+    parameters[6] = &bright;
+    matrix_set_pixel();
+    if (end()) {
+        parameters[10] = "Exit tilt because matrix_set_pixel: ";
+        print_error();
+        return;
+    }
+    do_events();
+
+    gyro_init();
+    if (end()) {
+        parameters[10] = "Exit tilt because gyro_init: ";
+        print_error();
+        return;
+    }
+    bool ready = false;
+    parameters[1] = &ready;
+    gyro_is_ready();
+    if (!ready || end()) {
+        parameters[10] = "Exit tilt because gyro_init: ";
+        print_error();
+        return;
+    }
+
+//    uint8_t index = 15;
+//    int8_t sign = 7;
+//    pbio_geometry_side_get_axis(PBIO_GEOMETRY_SIDE_FRONT, &index, &sign);
+//    gyro_is_ready();
+//    parameters[10] = "imu ";
+//    parameters[11] = (bool *) parameters[1];
+//    print_value();
+//    parameters[10] = "index ";
+//    parameters[11] = &index;
+//    print_value();
+//    parameters[10] = "sign ";
+//    parameters[11] = &sign;
+//    print_value();
+
+    while (!end()) {
+        do_events();
+
+        float angle_x = 0.0;
+        pbio_geometry_xyz_t geo;
+        geo.x = 1;
+        geo.y = 0;
+        geo.z = 0;
+        parameters[1] = &angle_x;
+        parameters[3] = &geo;
+        gyro_get_axis_rotation();
+        angle_x = *(float *) parameters[1];
+        if (*(pbio_error_t *) parameters[0] != PBIO_SUCCESS) break;
+
+        float angle_y = 0.0;
+        geo.x = 0;
+        geo.y = 1;
+        geo.z = 0;
+        parameters[1] = &angle_y;
+        gyro_get_axis_rotation();
+        angle_y = *(float *) parameters[1];
+        if (*(pbio_error_t *) parameters[0] != PBIO_SUCCESS) break;
+
+        float angle_z = 0.0;
+        geo.x = 0;
+        geo.y = 0;
+        geo.z = 1;
+        parameters[1] = &angle_z;
+        gyro_get_axis_rotation();
+        angle_z = *(float *) parameters[1];
+        if (*(pbio_error_t *) parameters[0] != PBIO_SUCCESS) break;
+
+        if (debug_mode == 1 && pbdrv_clock_get_ms() - last_print > 200) {
+            parameters[10] = "Angle X: ";
+            parameters[11] = &angle_x;
+            print_float();
+            parameters[10] = "Angle Y: ";
+            parameters[11] = &angle_y;
+            print_float();
+            parameters[10] = "Angle Z: ";
+            parameters[11] = &angle_z;
+            print_float();
+            parameters[10] = "State: ";
+            parameters[11] = &state;
+            print_value();
+            last_print = pbdrv_clock_get_ms();
+        }
+
+        parameters[3] = pbsys_hub_light_matrix;
+        parameters[4] = &x;
+        parameters[5] = &y;
+        parameters[6] = &bright;
+
+        if (state == 0) {
+            if (angle_y >= 35.0) {
+                state = 1;
+                matrix_clear();
+                x = 0;
+                matrix_set_pixel();
+            } else if (angle_y <= -35.0) {
+                state = -1;
+                matrix_clear();
+                x = 4;
+                matrix_set_pixel();
+            } else if (angle_x >= 35.0) {
+                state = 2;
+                matrix_clear();
+                y = 4;
+                matrix_set_pixel();
+            } else if (angle_x<= -35.0) {
+                state = -2;
+                matrix_clear();
+                y = 0;
+                matrix_set_pixel();
+            }
+        } else {
+            if (angle_x > -25.0 && angle_x < 25.0 &&
+                angle_y > -25.0 && angle_y < 25.0)
+                state = 0;
+        }
+
+        if (*(pbio_error_t *) parameters[0] != PBIO_SUCCESS) break;
+    }
+
+    parameters[10] = "Ending tilt automata with exit code ";
+    print_error();
+    parameters[3] = pbsys_hub_light_matrix;
+    matrix_clear();
+}
+
+void discover() {
+    pbdrv_legodev_dev_t *legodev_ultra;
+    pbdrv_legodev_dev_t *legodev_color;
+    pbio_servo_t *srv1;
+    pbio_servo_t *srv2;
+    pbio_drivebase_t *base;
+    pbio_port_id_t port;
+    pbio_direction_t direction;
+
+    port = PBIO_PORT_ID_B;
+    parameters[3] = &port;
+    get_medium_motor();
+    srv1 = parameters[1];
+    if (end()) {
+        parameters[10] = "Exit discover because srv1: ";
+        print_error();
+        return;
+    }
+    do_events();
+
+    port = PBIO_PORT_ID_D;
+    parameters[3] = &port;
+    get_medium_motor();
+    srv2 = parameters[1];
+    if (end()) {
+        parameters[10] = "Exit discover because srv2: ";
+        print_error();
+        return;
+    }
+    do_events();
+
+    direction = PBIO_DIRECTION_CLOCKWISE;
+    parameters[3] = srv1;
+    parameters[4] = &direction;
+    motor_medium_setup();
+    if (end()) {
+        parameters[10] = "Exit discover because setup srv1: ";
+        print_error();
+        return;
+    }
+    do_events();
+
+    direction = PBIO_DIRECTION_COUNTERCLOCKWISE;
+    parameters[3] = srv2;
+    parameters[4] = &direction;
+    motor_medium_setup();
+    if (end()) {
+        parameters[10] = "Exit discover because setup srv2: ";
+        print_error();
+        return;
+    }
+    do_events();
+
+    parameters[4] = srv1;
+    parameters[5] = srv2;
+    get_base();
+    base = parameters[1];
+    if (end()) {
+        parameters[10] = "Exit discover because base: ";
+        print_error();
+    }
+    do_events();
+
+    port = PBIO_PORT_ID_C;
+    parameters[3] = &port;
+    parameters[1] = legodev_ultra;
+    get_distance_sensor();
+    legodev_ultra = parameters[1];
+    if (end()) {
+        parameters[10] = "Exit discover because legodev_ultra: ";
+        print_error();
+        return;
+    }
+    do_events();
+
+    port = PBIO_PORT_ID_F;
+    parameters[3] = &port;
+    parameters[1] = legodev_color;
+    get_color_sensor();
+    legodev_color = parameters[1];
+    if (end()) {
+        parameters[10] = "Exit discover because legodev_color: ";
+        print_error();
+        return;
+    }
+    do_events();
+
+    /**
+     * 1 = run<br>
+     * 2 = stop<br>
+     * 3 = start_turn<br>
+     * 4 = end_turn<br>
+     */
+    int state = 4;
+    int32_t radius = 0;
+    int32_t speed = -200;
+    int32_t angle = 0;
+    uint32_t last_print = 0;
+
+    while (!end()) {
+        do_events();
+
+        parameters[3] = legodev_ultra;
+        get_low_distance_data();
+        if (*(pbio_error_t *) parameters[0] != PBIO_SUCCESS) break;
+        int distance = *(int16_t *) parameters[1];
+        if (distance < 0) distance = 2000;
+
+        parameters[3] = legodev_color;
+        get_color_data();
+        if (*(pbio_error_t *) parameters[0] != PBIO_SUCCESS) break;
+        int color = *(int8_t *) parameters[1];
+
+        if (debug_mode == 1 && pbdrv_clock_get_ms() - last_print > 200) {
+            parameters[10] = "Distance: ";
+            parameters[11] = &distance;
+            print_value();
+            parameters[10] = "Color: ";
+            parameters[11] = &color;
+            print_value();
+            parameters[10] = "State: ";
+            parameters[11] = &state;
+            print_value();
+            last_print = pbdrv_clock_get_ms();
+        }
+
+        parameters[3] = base;
+
+        if (state == 1) {
+            if (distance < 140) {
+                base_stop();
+                state = 2;
+            }
+        } else if (state == 2) {
+            if (color == -1) continue;
+            parameters[4] = &radius;
+            if (color == 0) angle = 300; //black
+            if (color == 10) angle = 150; //white
+            if (color == 7) angle = -150; //yellow
+            if (color == 3) angle = -300; //blue
+            if (color == 5) angle = -450; //turquoise
+            if (color == 9) angle = 450; //red
+            parameters[5] = &angle;
+            base_run_angle();
+            state = 3;
+        } else if (state == 3) {
+            bool done = false;
+            parameters[1] = &done;
+            base_is_done();
+            if (done) {
+                state = 4;
+            }
+        } else if (state == 4) {
+            if (distance > 150) {
+                angle = 0;
+                parameters[4] = &speed;
+                parameters[5] = &angle;
+                base_run_forever();
+                state = 1;
+            } else {
+                state = 2;
+            }
+        }
+
+        if (*(pbio_error_t *) parameters[0] != PBIO_SUCCESS) break;
+
+    }
+    parameters[10] = "Ending discover automata with exit code ";
+    print_error();
+    parameters[3] = base;
+    base_stop();
+}
+
+/**
+ * states:<br>
+ * -1 => back<br>
+ * 0 => stop<br>
+ * 1 => forward
+ */
+void follow() {
+    pbdrv_legodev_dev_t *legodev_ultra;
+    pbio_servo_t *srv1;
+    pbio_servo_t *srv2;
+    pbio_drivebase_t *base;
+    pbio_port_id_t port;
+    pbio_direction_t direction;
+
+    port = PBIO_PORT_ID_B;
+    parameters[3] = &port;
+    get_medium_motor();
+    srv1 = parameters[1];
+    if (end()) {
+        parameters[10] = "Exit follow because srv1: ";
+        print_error();
+        return;
+    }
+    do_events();
+
+    port = PBIO_PORT_ID_D;
+    parameters[3] = &port;
+    get_medium_motor();
+    srv2 = parameters[1];
+    if (end()) {
+        parameters[10] = "Exit follow because srv2: ";
+        print_error();
+        return;
+    }
+    do_events();
+
+    direction = PBIO_DIRECTION_CLOCKWISE;
+    parameters[3] = srv1;
+    parameters[4] = &direction;
+    motor_medium_setup();
+    if (end()) {
+        parameters[10] = "Exit follow because setup srv1: ";
+        print_error();
+        return;
+    }
+    do_events();
+
+    direction = PBIO_DIRECTION_COUNTERCLOCKWISE;
+    parameters[3] = srv2;
+    parameters[4] = &direction;
+    motor_medium_setup();
+    if (end()) {
+        parameters[10] = "Exit follow because setup srv2: ";
+        print_error();
+        return;
+    }
+    do_events();
+
+    parameters[4] = srv1;
+    parameters[5] = srv2;
+    get_base();
+    base = parameters[1];
+    if (end()) {
+        parameters[10] = "Exit follow because base: ";
+        print_error();
+    }
+    do_events();
+
+    port = PBIO_PORT_ID_C;
+    parameters[3] = &port;
+    parameters[1] = legodev_ultra;
+    get_distance_sensor();
+    legodev_ultra = parameters[1];
+    if (end()) {
+        parameters[10] = "Exit follow because legodev_ultra: ";
+        print_error();
+        return;
+    }
+    do_events();
+
+    /**
+     * -1 => back<br>
+     * 0 => stop<br>
+     * 1 => forward
+     */
+    int state = 0;
+    int32_t speed = 250;
+    int32_t angle = 0;
+    uint32_t last_print = 0;
+
+    while (!end()) {
+        do_events();
+
+        parameters[3] = legodev_ultra;
+        get_low_distance_data();
+        if (*(pbio_error_t *) parameters[0] != PBIO_SUCCESS) break;
+        int distance = *(int16_t *) parameters[1];
+        if (distance < 0) distance = 2000;
+
+        if (debug_mode == 1 && pbdrv_clock_get_ms() - last_print > 200) {
+            parameters[10] = "Distance: ";
+            parameters[11] = &distance;
+            print_value();
+            parameters[10] = "State: ";
+            parameters[11] = &state;
+            print_value();
+            last_print = pbdrv_clock_get_ms();
+        }
+
+        parameters[3] = base;
+        parameters[4] = &speed;
+        parameters[5] = &angle;
+
+        if (state == -1) {
+            if (distance > 150) {
+                base_stop();
+                state = 0;
+            }
+        } else if (state == 1) {
+            if (distance < 300) {
+                base_stop();
+                state = 0;
+            }
+        } else if (state == 0) {
+            if (distance < 140) {
+                if (speed < 0) speed *= -1;
+                base_run_forever();
+                state = -1;
+            } else if (distance > 310) {
+                if (speed > 0) speed *= -1;
+                base_run_forever();
+                state = 1;
+            }
+        }
+
+        if (*(pbio_error_t *) parameters[0] != PBIO_SUCCESS) break;
+    }
+
+    parameters[10] = "Ending follow automata with exit code ";
+    print_error();
+    parameters[3] = base;
+    base_stop();
+}
+
+//JSON parser: https://zserge.com/jsmn/
+
+//pointer to function example:
+//    #include <stdio.h>
 //
-//int main() {
-//    GHashTable *hash = g_hash_table_new(g_str_hash, g_str_equal);
+//    void f1() {
+//        printf("this is f1\n");
+//    }
 //
-//    g_hash_table_insert(hash, "key1", "value1");
-//    g_hash_table_insert(hash, "key2", "value2");
+//    void f2() {
+//        printf("and this is f2\n");
+//    }
 //
-//    char *value = g_hash_table_lookup(hash, "key1");
-//    printf("Key1: %s\n", value);
+//    void (*fun_ptr[2])();
 //
-//    g_hash_table_destroy(hash);
-//    return 0;
-//}
+//    int main() {
+//        fun_ptr[0] = f1;
+//        fun_ptr[1] = f2;
+//
+//        void (*fn)() = fun_ptr[0];
+//        fn();
+//        fn = fun_ptr[1];
+//        fn();
+//
+//        fun_ptr[0]();
+//        fun_ptr[1]();
+//
+//    // f1, f2, f1, f2
+//    }
+
+//dynamic allocation memory:
+//    MEMB(bee, char, 10);
+//
+//    char *ch = memb_alloc(&bee);
+//    if (ch != NULL) {
+//        strcpy(ch, "bee");
+//        memb_free(&bee, ch);
+//    }
+//    else
+//        ch = "flee";
+
+//dynamic structure (lists, linked lists, dictionary,..): https://sourceware.org/glibc/wiki/HomePage
+//    #include <glib.h>
+//
+//    int main() {
+//        GHashTable *hash = g_hash_table_new(g_str_hash, g_str_equal);
+//
+//        g_hash_table_insert(hash, "key1", "value1");
+//        g_hash_table_insert(hash, "key2", "value2");
+//
+//        char *value = g_hash_table_lookup(hash, "key1");
+//        printf("Key1: %s\n", value);
+//
+//        g_hash_table_destroy(hash);
+//        return 0;
+//    }
