@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/STM32_USB_Device_Library" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/btstack" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/micropython" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/micropython/lib/micropython-lib" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/micropython/lib/stm32lib" vcs="Git" />
+  </component>
+</project>

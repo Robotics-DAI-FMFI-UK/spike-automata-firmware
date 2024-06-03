@@ -19,8 +19,14 @@ endif
 primehub: .depend
 	@$(MAKE) -C bricks/primehub
 	
+clean: .clean-mpy-cross
+	@$(MAKE) -C bricks/primehub clean
+	
 .depend:
 	@$(MAKE) -C micropython/mpy-cross CROSS_COMPILE=$(HOST_CROSS_COMPILE)
+	
+.clean-mpy-cross:
+	@$(MAKE) -C micropython/mpy-cross clean CROSS_COMPILE=$(HOST_CROSS_COMPILE)
 	
 help:
 	@echo "Use 'make primehub' to build a brick."

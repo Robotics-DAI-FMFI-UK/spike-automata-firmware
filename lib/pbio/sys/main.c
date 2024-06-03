@@ -6,24 +6,25 @@
 #if PBSYS_CONFIG_MAIN
 
 #include <stdint.h>
+#include <string.h>
 
 #include <pbdrv/reset.h>
 #include <pbdrv/usb.h>
+#include <pbdrv/bluetooth.h>
+
 #include <pbio/main.h>
+
 #include <pbsys/core.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
+#include <pbsys/program_stop.h>
+#include <pbsys/bluetooth.h>
 
 #include "program_load.h"
 #include "program_stop.h"
-#include <pbsys/program_stop.h>
-#include <pbsys/bluetooth.h>
-#include <pbdrv/bluetooth.h>
 
-#include <automata/automata.h>
-#include <pbio/main.h>
+#include "automata/automata.h"
 
-#include <string.h>
 
 void HAL_Delay(uint32_t delay);
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection);
@@ -38,12 +39,10 @@ int main(int argc, char **argv) {
 
     pbio_init();
     pbsys_init();
-    bool started = false;
 
     // Keep loading and running user programs until shutdown is requested.
     while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
 
-        /* important for later
         // Receive a program. This cancels itself on shutdown.
         static pbsys_main_program_t program;
         pbio_error_t err = pbsys_program_load_wait_command(&program);
@@ -54,6 +53,7 @@ int main(int argc, char **argv) {
         // Prepare pbsys for running the program.
         pbsys_status_set(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
         pbsys_bluetooth_rx_set_callback(pbsys_main_stdin_event);
+        /* important for later
 
         // Handle pending events triggered by the status change, such as
         // starting status light animation.
@@ -65,25 +65,17 @@ int main(int argc, char **argv) {
 
         */
 
-        if //(!started &&
-           ( pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
-            if (!started) started = true;
-
-
-            char *msg = "A";
-            uint32_t size = strlen(msg);
-            pbsys_bluetooth_tx((unsigned char *)msg, &size);
-
+        if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
             start_automata();
         }
 
         pbio_do_one_event();
 
         // Get system back in idle state.
-        /*pbsys_status_clear(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
+        pbsys_status_clear(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
         pbsys_bluetooth_rx_set_callback(NULL);
         pbsys_program_stop_set_buttons(PBIO_BUTTON_CENTER);
-        pbio_stop_all(true);*/
+        pbio_stop_all(true);
     }
 
     // Stop system processes and save user data before we shutdown.
