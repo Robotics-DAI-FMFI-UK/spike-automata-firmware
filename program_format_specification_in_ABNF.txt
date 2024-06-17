@@ -1,0 +1,154 @@
+; specification of the numeric representation of program
+; it is used to transmit program to firmware
+; comments appear after semicolon in this specification
+
+<program> ::= <program-header> <global-variables> *<automaton>    ; <automaton> occurs <automata-count> times
+
+<program-header> ::= <automata-count> <LF> <top-level-automata-count> <LF>  ; two integers
+
+<global-variables> ::= <global-variables-count> <LF> *<variable>           ; <variable> occurs <global-variables-count> times
+
+<variable> ::= <variable-name> <LF> <variable-type> <LF> <variable-init-value> <LF>
+   ; variables are indexed from 0 in the order the appear in the list
+<variable-init-value> ::= <constant-string-value> | <constant-numeric-value> | <constant-boolean-value>
+   ; the type of init value should match the specified variable type; port-type variable initial values are ignored (can be empty string, or 0)
+
+<variable-name> ::= <ALPHA> *(<ALPHA> | <DIGIT> | "_" | "-")
+<variable-type> ::= <var-type-string> | <var-type-number> | <var-type-boolean> | <var-type-port>
+<var-type-string> ::= "0"        ; strings have a fixed maximum size of 30 chars
+<var-type-number> ::= "1"
+<var-type-boolean> ::= "2"
+<var-type-port> ::= <var-type-single-port> | <var-type-double-port>
+<var-type-single-port> ::= <device-type> <port-number-plus-2>
+<device-type> ::= "0" | "1" | "2" | "3" | "4" | "5"          ; 0 - force sensor, 1 - color sensor, 2 - distance US sensor, 4 - medium motor, 5 - large motor
+<port-number-plus-2> ::= "3" | "4" | "5" | "6" | "7" | "8"   ; for port 1, specify 3, for port 4, specify 6, etc.
+<var-type-double-port> ::= <device-type-drive-base> <port-number-plus-2> <port-number-plus-2>
+<device-type-drive-base> ::= "1"   ; denotes drive base with two medium motors attached to the two ports specified above
+  ; example port types: "15" - color sensor on port 3,  "178" - motor base on ports E (left), F (right)
+
+<automaton> ::= <automaton-header> <local-variables> *<state> *<event>    ; <state> occurs <number-of-states> times, <event> occurs <number-of-events> times
+
+<automaton-header> ::= <number-of-states> <LF> <number-of-final-states> *(<LF> <final-state-number>) <LF> <number-of-events> <LF>   ; <final-state_number> occurs <number-of-final-states>-times
+
+<local-variables> ::= <local-variables-count> <LF> *<variable>       ; <variable> occurs <local-variables-count> times
+
+<state> ::= <number-of-script-lines> <LF> <script-launch-period-in-ms> <LF> <subautomaton-id> <LF> <number-of-transitions> <LF> *<transition> *<script-line>
+  ; only active state type has nonzero script lines
+  ; only subautomaton type has subautomaton-id != -1
+  ;   therefore state type can be inferrred
+  ; <transition> occurs <number-of-transitions> times
+  ; <script-line> occurs <number-of-script-lines> times
+  ; <script-launch-period-in-ms> == -1 means to run the script once only, otherwise repeat forever
+
+<transition> ::= <destination-state-ID> <LF> <specification-of-condition> <LF> <number-of-transition-script-lines> <LF> *<script-line>  ; <script-line> occurs <number-of-transition-script-lines> times
+<destination-state-ID> ::= *1<DIGIT>   ; index in the list of states starting with 0
+<specification-of-condition> ::= <value-expression>   ; types 0, 1 will lead to runtime-error as well as 3, 4, 5 that do not return boolean
+
+<event> ::= <transition>   ; events are automaton-global transitions with destination state one of the final states
+
+<value-expression> ::= "0 " <constant-string-value> |
+                       "1 " <constant-number-value> |
+                       "2 " <constant-boolean-value> |
+                       "3 " <id-of-global-variable> |
+                       "4 " <id-of-local-variable> |
+                       "5 " <function-call>
+
+<constant-string-value> ::= <DQUOTE> *<VCHAR> <DQUOTE>       ; example "hello world!"
+<constant-number-value> ::= ["-"] *1<DIGIT> ["." *1<DIGIT>]  ; examples: -1.34234   3   12.4    - all numbers are represented as 32-bit floats
+<constant-boolean-value> ::=  "true" | "false"
+<id-of-global-variable> ::= *1<DIGIT>
+<id-of-local-variable> ::= *1<DIGIT>
+
+<function-call> ::= <function-id> *(" " <value-expression>)
+  ; value expressions are arguments for the function call, and their number depends on the type of function, see below
+
+<script-line> ::= <statement> <LF>
+
+<statement> ::= <procedure-id> " " *<value-expression>
+
+<procedure-id> ::= "0" |   ; print_message(string msg)            - sends string to console
+                   "1" |   ; print_value(string msg, number n)    - sends string followed by number to console
+                   "2" |   ; matrix_clear()                       - turns off all 25 pixels
+                   "3" |   ; matric_orientation(number o)         - sets orientation for showing letters/numbers
+                   "4" |   ; matrix_set_pixel(number row, number col, number brightness_percentage)   - ; controls single LED of the display
+                   "5" |   ; matrix_set_image(number image_id)    - shows one of the predefined images on display
+                   "6" |   ; matrix_letter(string msg)            - displays one letter character on display
+                   "7" |   ; matrix_digit(number digit)           - displays one digit on display on display
+                   "8" |   ; play_tone(number freq, number dur_ms)  - plays tone of the specified frequency for the specified time
+                   "9" |   ; stop_play()                          - turn off playing tone now
+                  "10" |   ; set_local_number(number var, number value)  - set a specified local variable to specified numeric value, automatically inferred from user's set(string var, any value)
+                  "11" |   ; set_local_string(number var, string value)  - set a specified local variable to specified string value, automatically inferred from user's set(string var, any value)
+                  "12" |   ; set_local_boolean(number var, boolean value) - set a specified local variable to specified string value, automatically inferred from user's set(string var, any value)
+                  "13" |   ; set_global_number(number var, number value)  - set a specified global variable to specified numeric value, automatically inferred from user's set(string var, any value)
+                  "14" |   ; set_global_string(number var, string value)  - set a specified global variable to specified string value, automatically inferred from user's set(string var, any value)
+                  "15" |   ; set_global_boolean(number var, boolean value) - set a specified global variable to specified string value, automatically inferred from user's set(string var, any value)
+                  "16" |   ; motor_on(number port_var, number speed)      - starts motor on a port specified using id of variable of type port to specified speed (positive or negative)
+                  "17" |   ; motor_on_for(number port_var, number speed, number time_ms)
+                           ;                  - starts background spinning of motor that is automatically stopped after the specified time
+                  "18" |   ; motor_turn(number port_var, number speed, number angle_deg)
+                           ;                  - starts background spinning of motor that is automatically stopped after turning the specified angle in degrees (positive or negative)
+                  "19" |   ; motor_off(number port_var)           - turn off motor on port specified using port variable instantly
+                  "20" |   ; base_speed(number port_var, number speed) - configure speed for robot base movements
+                  "21" |   ; base_fwd(number port_var, number dist_deg)
+                           ;                                      - move the robot using two motors on ports specified by the base ports type variable for specified number of degrees using configured speed
+                  "22" |   ; base_on(number port_var)             - start moving the robot base using configured speed
+                  "23" |   ; base_off(number port_var)            - stop moving the base instantly
+
+                  "24" |   ; base_turn(number port_var, number radius, number angle)
+                           ;                                      - perform a rotational movement along a circle with the specified radius for a specified angle
+                  "25" |   ; base_tank(number port_var, number left_speed, number right_speed)
+                           ;                                      - start moving the robot base with the specified different speeds on the two base motors
+                  "26" |   ; base_tank_for(number port_var, number left_speed, number right_speed, number time_ms)
+                           ;                                      - start moving the robot base with the specified different speeds on the two base motors and stop after specified time automatically
+                  "27" |   ; base_tank_turn(number port_var, number left_speed, number right_speed, number angle_deg)
+                           ;                                      - start moving the robot base with the specified different speeds on the two base motors and stop after specified angle automatically
+                  "28" |   ; delay(ms)                            - pause execution of script for the specified time    
+                  "29" |   ; while(number boolean_var)            - beginning of while loop - it is not really a procedure, but a statement for the interpreter to mark the start of the loop
+                  "30" |   ; wend()                               - end of while loop - not really a procedure, but a statement for the interpreter to jump to the start of the loop, if variable still true
+                  "31" |   ; if(number boolean_var)               - beginning of if branching - not a procedure, marks start of the then part of the if block
+                  "32" |   ; else()                               - end of then-part of the if-block and start of else-part (optional) - always pairs with the last if encountered
+                  "33"     ; endif()                              - end of if branching - not a procedure, marks end of then-part of else-part of the if-block
+                           ;           conditions and loops can be nested up to three levels
+
+<function-id> ::= "100" |  ; read()                          - read one char from BT console and return it as string of len 1
+                  "101" |  ; read_line()                     - read one line from BT console and return it as string
+                  "102" |  ; angle(number dir)               - return inclination of the hub (0 - yaw, 1 - pitch, 2 - roll), returns number
+                  "103" |  ; motor_angle(number port_var)    - return the current position of motor specified with port-type variable in degrees 0-359
+                  "104" |  ; motor_speed(number port_var)    - return the current speed of motor specified with port-type variable in percentage
+                  "105" |  ; left_button()                   - return the state of left button pressed  (0 - not pressed, 1 - pressed)
+                  "106" |  ; right_button()                  - return the state of right button pressed  (0 - not pressed, 1 - pressed)
+                  "107" |  ; bt_button()                     - return the state of bt button pressed  (0 - not pressed, 1 - pressed)
+                  "108" |  ; distance(number port_var)       - return the distance measured by US sensor on port specified with port-type variable
+                  "109" |  ; force(number port_var)          - return the force measured by force sensor on port specified with port-type variable
+                  "110" |  ; color(number port_var)          - return the color number measured by color sensor on port specified with port-type variable
+                  "111" |  ; reflect(number port_var)        - return the percentage of reflected light in active mode measured by color sensor on port specified with port-type variable
+                  "112" |  ; ambient(number port_var)        - return the percentage of ambient light in passive mode measured by color sensor on port specified with port-type variable
+                  "113" |  ; concat(string s1, string s2)    - return a new string that is created by concatenating the two specified strings
+                  "114" |  ; substr(string s, number i, number len)  - returns a new string containing a substring of the supplied string, starting at a specified index of a specified length
+                  "115" |  ; eqstr(string s1, string s2)     - returns true, if the strings are equal, otherwise returns false
+                  "116" |  ; setchar(string s, string c, number i)   - modifies the specified string by changing its i-th char to the first char in the specified string c
+                  "117" |  ; ascii(string s)                 - returns a number representing ASCII value of the first char of string s
+                  "118" |  ; chr(number ascii)               - returns a one-char long string with a character with the specified ASCII value
+                  "119" |  ; eq(number a, number b)          - return true, if a, and b are the same numbers (wrt. a small allowed epsilon difference), otherwise returns false
+                  "120" |  ; less(number a, number b)        - returns true, if a < b, otherwise returns false
+                  "121" |  ; more(number a, number b)        - returns true, if a > b, otherwise returns false
+                  "122" |  ; betwen(number x, number bottom, number top)  - returns true, if x >= bottom and x <= top, otherwise returns false
+                  "123" |  ; plus(number a, number b)        - returns a number with value a + b
+                  "124" |  ; minus(number a, number b)       - returns a number with value a - b
+                  "125" |  ; times(number a, number b)       - returns a number with value a * b
+                  "126" |  ; divide(number a, number b)      - returns a number with value a / b
+                  "127" |  ; mod(number a, number b)         - returns a number with value a % b
+                  "128" |  ; sqrt(number x)                  - returns a number with value square root of x
+                  "129" |  ; abs(number x)                   - returns a number with value abs(x)
+                  "130" |  ; sgn(number x)                   - returns a number with value sign of x: -1, 0 or 1
+                  "131" |  ; sin(number x)                   - returns a number with value sin(x)
+                  "132" |  ; cos(number x)                   - returns a number with value cos(x)
+                  "133" |  ; atan2(number y, number x)       - returns a number with value atan2(y, x)
+                  "134" |  ; ceil(number x)                  - returns a number with value ceil(x)
+                  "135" |  ; floor(number x)                 - returns a number with value floor(x)
+                  "136" |  ; and(boolean a, boolean b)       - logical and of two boolean values
+                  "137" |  ; or(boolean a, boolean b)        - logical or of two boolean values
+                  "138" |  ; xor(boolean a, boolean b)       - logical xor of two boolean values
+                  "139" |  ; not(boolean x)                  - logical not of a boolean value                                                      
+                  
+
