@@ -64,7 +64,7 @@
 
 <script-line> ::= <statement> <LF>
 
-<statement> ::= <procedure-id> " " *<value-expression>
+<statement> ::= <procedure-id> *(" " <value-expression>)
 
 <procedure-id> ::= "0" |   ; print_message(string msg)            - sends string to console
                    "1" |   ; print_value(string msg, number n)    - sends string followed by number to console
