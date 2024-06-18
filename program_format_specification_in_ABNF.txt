@@ -116,7 +116,7 @@
                            ;           conditions and loops can be nested up to three levels
                   "34" |   ; lock()                               
                            ;                  - lock the processing task in init transition, end transition and active state(after last task or unlock() will be next control of conditions in transitions)
-                  "35" |   ; unlock()				                  
+                  "35"     ; unlock()				                  
                            ;                  - unlock the processing task in init transition, end transition and active state(after every task will be control of conditions in transitions)
 
 <function-id> ::= "100" |  ; read()                          - read one char from BT console and return it as string of len 1
