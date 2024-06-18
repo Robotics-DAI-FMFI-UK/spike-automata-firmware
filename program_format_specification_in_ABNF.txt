@@ -4,7 +4,7 @@
 
 <program> ::= <program-header> <global-variables> *<automaton>    ; <automaton> occurs <automata-count> times
 
-<program-header> ::= <automata-count> <LF> <top-level-automata-count> <LF>  ; two integers
+<program-header> ::= <automata-count> <LF> <top-level-automata-count> <LF> ; two integers
 
 <global-variables> ::= <global-variables-count> <LF> *<variable>           ; <variable> occurs <global-variables-count> times
 
@@ -13,35 +13,40 @@
 <variable-init-value> ::= <constant-string-value> | <constant-numeric-value> | <constant-boolean-value>
    ; the type of init value should match the specified variable type; port-type variable initial values are ignored (can be empty string, or 0)
 
-<variable-name> ::= <ALPHA> *(<ALPHA> | <DIGIT> | "_" | "-")
+<name> ::= <ALPHA> *19(<ALPHA> | <DIGIT> | "_" | "-")
+<variable-name> ::= <name>
 <variable-type> ::= <var-type-string> | <var-type-number> | <var-type-boolean> | <var-type-port>
-<var-type-string> ::= "0"        ; strings have a fixed maximum size of 30 chars
-<var-type-number> ::= "1"
-<var-type-boolean> ::= "2"
+<var-type-string> ::= "6"        ; strings have a fixed maximum size of 30 chars
+<var-type-number> ::= "7"
+<var-type-boolean> ::= "8"
 <var-type-port> ::= <var-type-single-port> | <var-type-double-port>
 <var-type-single-port> ::= <device-type> <port-number-plus-2>
 <device-type> ::= "0" | "1" | "2" | "3" | "4" | "5"          ; 0 - force sensor, 1 - color sensor, 2 - distance US sensor, 4 - medium motor, 5 - large motor
-<port-number-plus-2> ::= "3" | "4" | "5" | "6" | "7" | "8"   ; for port 1, specify 3, for port 4, specify 6, etc.
+<port-number-plus-2> ::= "0" | "1" | "2" | "3" | "4" | "5"   ; for port A, specify 0, for port E, specify 4, etc.
 <var-type-double-port> ::= <device-type-drive-base> <port-number-plus-2> <port-number-plus-2>
 <device-type-drive-base> ::= "1"   ; denotes drive base with two medium motors attached to the two ports specified above
   ; example port types: "15" - color sensor on port 3,  "178" - motor base on ports E (left), F (right)
 
 <automaton> ::= <automaton-header> <local-variables> *<state> *<event>    ; <state> occurs <number-of-states> times, <event> occurs <number-of-events> times
 
-<automaton-header> ::= <number-of-states> <LF> <number-of-final-states> *(<LF> <final-state-number>) <LF> <number-of-events> <LF>   ; <final-state_number> occurs <number-of-final-states>-times
+<automaton-header> ::= <automaton-name> <LF> <number-of-states> <LF> <number-of-final-states> *(<LF> <final-state-number>) <LF> <number-of-events> <LF>   ; <final-state_number> occurs <number-of-final-states>-times
+
+<automaton-name> ::= <name>
 
 <local-variables> ::= <local-variables-count> <LF> *<variable>       ; <variable> occurs <local-variables-count> times
 
-<state> ::= <number-of-script-lines> <LF> <script-launch-period-in-ms> <LF> <subautomaton-id> <LF> <number-of-transitions> <LF> *<transition> *<script-line>
+<state> ::= <state-name> <LF> <number-of-script-lines> <LF> <script-launch-period-in-ms> <LF> <subautomaton-id> <LF> <number-of-transitions> <LF> *<transition> *<script-line>
   ; only active state type has nonzero script lines
   ; only subautomaton type has subautomaton-id != -1
-  ;   therefore state type can be inferrred
+  ;   therefore state type can be inferred
   ; <transition> occurs <number-of-transitions> times
   ; <script-line> occurs <number-of-script-lines> times
   ; <script-launch-period-in-ms> == -1 means to run the script once only, otherwise repeat forever
 
+<state-name> ::= <name>
+
 <transition> ::= <destination-state-ID> <LF> <specification-of-condition> <LF> <number-of-transition-script-lines> <LF> *<script-line>  ; <script-line> occurs <number-of-transition-script-lines> times
-<destination-state-ID> ::= *1<DIGIT>   ; index in the list of states starting with 0
+<destination-state-ID> ::= 1*<DIGIT>   ; index in the list of states starting with 0
 <specification-of-condition> ::= <value-expression>   ; types 0, 1 will lead to runtime-error as well as 3, 4, 5 that do not return boolean
 
 <event> ::= <transition>   ; events are automaton-global transitions with destination state one of the final states
@@ -54,10 +59,10 @@
                        "5 " <function-call>
 
 <constant-string-value> ::= <DQUOTE> *<VCHAR> <DQUOTE>       ; example "hello world!"
-<constant-number-value> ::= ["-"] *1<DIGIT> ["." *1<DIGIT>]  ; examples: -1.34234   3   12.4    - all numbers are represented as 32-bit floats
+<constant-number-value> ::= ["-"] 1*<DIGIT> ["." 1*<DIGIT>]  ; examples: -1.34234   3   12.4    - all numbers are represented as 32-bit floats
 <constant-boolean-value> ::=  "true" | "false"
-<id-of-global-variable> ::= *1<DIGIT>
-<id-of-local-variable> ::= *1<DIGIT>
+<id-of-global-variable> ::= 1*<DIGIT>
+<id-of-local-variable> ::= 1*<DIGIT>
 
 <function-call> ::= <function-id> *(" " <value-expression>)
   ; value expressions are arguments for the function call, and their number depends on the type of function, see below
@@ -107,8 +112,12 @@
                   "30" |   ; wend()                               - end of while loop - not really a procedure, but a statement for the interpreter to jump to the start of the loop, if variable still true
                   "31" |   ; if(number boolean_var)               - beginning of if branching - not a procedure, marks start of the then part of the if block
                   "32" |   ; else()                               - end of then-part of the if-block and start of else-part (optional) - always pairs with the last if encountered
-                  "33"     ; endif()                              - end of if branching - not a procedure, marks end of then-part of else-part of the if-block
+                  "33" |   ; endif()                              - end of if branching - not a procedure, marks end of then-part of else-part of the if-block
                            ;           conditions and loops can be nested up to three levels
+                  "34" |   ; lock()                               
+                           ;                  - lock the processing task in init transition, end transition and active state(after last task or unlock() will be next control of conditions in transitions)
+                  "35" |   ; unlock()				                  
+                           ;                  - unlock the processing task in init transition, end transition and active state(after every task will be control of conditions in transitions)
 
 <function-id> ::= "100" |  ; read()                          - read one char from BT console and return it as string of len 1
                   "101" |  ; read_line()                     - read one line from BT console and return it as string
@@ -150,5 +159,3 @@
                   "137" |  ; or(boolean a, boolean b)        - logical or of two boolean values
                   "138" |  ; xor(boolean a, boolean b)       - logical xor of two boolean values
                   "139" |  ; not(boolean x)                  - logical not of a boolean value                                                      
-                  
-
