@@ -25,7 +25,7 @@
 <port-number-plus-2> ::= "0" | "1" | "2" | "3" | "4" | "5"   ; for port A, specify 0, for port E, specify 4, etc.
 <var-type-double-port> ::= <device-type-drive-base> <port-number-plus-2> <port-number-plus-2>
 <device-type-drive-base> ::= "1"   ; denotes drive base with two medium motors attached to the two ports specified above
-  ; example port types: "15" - color sensor on port 3,  "178" - motor base on ports E (left), F (right)
+  ; example port types: "12" - color sensor on port 3,  "145" - motor base on ports E (left), F (right)
 
 <automaton> ::= <automaton-header> <local-variables> *<state> *<event>    ; <state> occurs <number-of-states> times, <event> occurs <number-of-events> times
 
