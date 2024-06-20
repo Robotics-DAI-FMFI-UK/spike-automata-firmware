@@ -141,7 +141,7 @@
                   "119" |  ; eq(number a, number b)          - return true, if a, and b are the same numbers (wrt. a small allowed epsilon difference), otherwise returns false
                   "120" |  ; less(number a, number b)        - returns true, if a < b, otherwise returns false
                   "121" |  ; more(number a, number b)        - returns true, if a > b, otherwise returns false
-                  "122" |  ; betwen(number x, number bottom, number top)  - returns true, if x >= bottom and x <= top, otherwise returns false
+                  "122" |  ; between(number x, number bottom, number top)  - returns true, if x >= bottom and x <= top, otherwise returns false
                   "123" |  ; plus(number a, number b)        - returns a number with value a + b
                   "124" |  ; minus(number a, number b)       - returns a number with value a - b
                   "125" |  ; times(number a, number b)       - returns a number with value a * b
