@@ -41,7 +41,7 @@
 // bootloader and the area used by upstream MicroPython. Currently, this
 // just needs to be big enough to back up the user program on shutdown.
 #define PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_START_ADDRESS (512 * 1024)
-#define PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_SIZE (256 * 1024)
+#define PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_SIZE (1 * 1024)
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_RESISTOR_LADDER         (1)

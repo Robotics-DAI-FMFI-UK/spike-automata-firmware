@@ -240,6 +240,10 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	../../automata/motor.c \
 	../../automata/modules.c \
 	../../automata/parameters.c \
+	../../automata/fsa_data.c \
+	../../automata/fsa_api.c \
+	../../automata/fsa_parse.c \
+	../../automata/serial_reader.c \
 	)
 
 # MicroPython math library

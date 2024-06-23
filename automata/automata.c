@@ -1,4 +1,6 @@
 #include "automata.h"
+#include "serial_reader.h"
+#include "fsa_parse.h"
 
 //  predefine:
 uint32_t pbdrv_clock_get_ms(void);
@@ -33,6 +35,63 @@ bool end() {
 
 int debug_mode = 0;
 
+uint8_t received[100000];
+uint32_t recvptr = 0;
+
+void echo_lines(){
+    uint32_t started_waiting = 0;
+    uint8_t waiting = 0;
+    recvptr = 0;
+
+    do {
+        do_events();
+        uint8_t data[10];
+        uint32_t size = 10;
+        pbio_error_t err = pbsys_bluetooth_rx(data, &size);
+        if (err == PBIO_ERROR_AGAIN)
+        {
+            if (!waiting)
+            {
+                started_waiting = pbdrv_clock_get_ms();
+                waiting = 1;
+            }
+            else
+            {
+                if (pbdrv_clock_get_ms() - started_waiting > 500) break;
+            }
+        }
+        else
+        {
+            uint8_t copydata[20];
+            uint32_t j = 0;
+            for (uint32_t i = 0; i < size; i++)
+            {
+                if (data[i] == '\r') copydata[j++] = '\n';
+                copydata[j++] = data[i];
+            }
+            waiting = 0;
+            memcpy(received + recvptr, copydata, j);
+            recvptr += j;
+            if (recvptr > 100000) recvptr = 0;
+        }
+    } while (1);
+    uint32_t size = 21;
+
+    uint32_t i = 0;
+    for ( ; i < recvptr / 10; i++) {
+        size = 10;
+        pbsys_bluetooth_tx(received + i * 10, &size);
+        delay(100);
+    }
+
+    size = recvptr - i * 10;
+    pbsys_bluetooth_tx(received + i * 10, &size);
+    delay(10);
+
+    size = 7;
+    pbsys_bluetooth_tx((const uint8_t *)"\r\nEOT\r\n", &size);
+}
+
 int start_automata(void) {
     pbio_error_t err = PBIO_SUCCESS;
     parameters[0] = &err;
@@ -44,46 +103,78 @@ int start_automata(void) {
         uint32_t size = 10;
         pbsys_bluetooth_rx(data, &size);
         if (size > 0) {
-            char message[size + 1];
-            strcpy(message, (char *) data);
-            message[1] = '\0';
-            parameters[10] = message;
-            print_message();
-            switch (message[0]) {
-                case '0':
-                    parameters[10] = "Starting follow automata...";
-                    print_message();
-                    follow();
-                    break;
-                case '1':
-                    parameters[10] = "Starting discover automata...";
-                    print_message();
-                    discover();
-                    break;
-                case '2':
-                    parameters[10] = "Starting tilt automata...";
-                    print_message();
-                    tilt();
-                    break;
-                case 'd':
-                    if (debug_mode == 0) {
-                        parameters[10] = "Debug mode on.";
-                        debug_mode++;
-                    } else if (debug_mode == 1) {
-                        parameters[10] = "Debug mode off.";
-                        debug_mode--;
-                    }
-                    print_message();
-                    break;
-                default:
-                    parameters[10] = "Unspecified code...";
-                    print_message();
+            if (size < 16) {
+                char message[size + 1];
+                strcpy(message, (char *) data);
+                message[1] = '\0';
+                parameters[10] = message;
+                print_message();
+                switch (message[0]) {
+                    case '0':
+                        parameters[10] = "Starting follow automata...";
+                        print_message();
+                        follow();
+                        break;
+                    case '1':
+                        parameters[10] = "Starting discover automata...";
+                        print_message();
+                        discover();
+                        break;
+                    case '2':
+                        parameters[10] = "Starting tilt automata...";
+                        print_message();
+                        tilt();
+                        break;
+                    case '7':
+                        //echo_lines();
+                        fsa_parse();
+                        break;
+                    case 'd':
+                        if (debug_mode == 0) {
+                            parameters[10] = "Debug mode on.";
+                            debug_mode++;
+                        } else if (debug_mode == 1) {
+                            parameters[10] = "Debug mode off.";
+                            debug_mode--;
+                        }
+                        print_message();
+                        break;
+//                case 'm':
+//                    memory_test();
+//                    break;
+                    default:
+                        parameters[10] = "Unspecified code...";
+                        print_message();
+                }
             }
+//            else {
+//                parse_automata(data, size);
+//            }
         }
     }
 
     return 0;
 }
+
+//void parse_automata(uint8_t message, uint32_t length) {
+//    uint8_t automata_text[2000] = message;
+//    uint32_t position = length;
+//    while (true) {
+//        uint8_t data[200];
+//        uint32_t size = 200;
+//        pbsys_bluetooth_rx(data, &size);
+//        if (size == 0)
+//            break;
+//        if (position += size > 2000){
+//            parameters[10] = "Too big automata!";
+//            print_message();
+//            return;
+//        }
+//        automata_text[length] = data;
+//        position += size;
+//    }
+//    return;
+//}
 
 /**
  * states:<br>
@@ -140,20 +231,6 @@ void tilt() {
         print_error();
         return;
     }
-
-//    uint8_t index = 15;
-//    int8_t sign = 7;
-//    pbio_geometry_side_get_axis(PBIO_GEOMETRY_SIDE_FRONT, &index, &sign);
-//    gyro_is_ready();
-//    parameters[10] = "imu ";
-//    parameters[11] = (bool *) parameters[1];
-//    print_value();
-//    parameters[10] = "index ";
-//    parameters[11] = &index;
-//    print_value();
-//    parameters[10] = "sign ";
-//    parameters[11] = &sign;
-//    print_value();
 
     while (!end()) {
         do_events();
@@ -224,7 +301,7 @@ void tilt() {
                 matrix_clear();
                 y = 4;
                 matrix_set_pixel();
-            } else if (angle_x<= -35.0) {
+            } else if (angle_x <= -35.0) {
                 state = -2;
                 matrix_clear();
                 y = 0;
