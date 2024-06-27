@@ -159,3 +159,5 @@
                   "137" |  ; or(boolean a, boolean b)        - logical or of two boolean values
                   "138" |  ; xor(boolean a, boolean b)       - logical xor of two boolean values
                   "139" |  ; not(boolean x)                  - logical not of a boolean value                                                      
+		  "140" |  ; timer(i)                        - outputs the current value of timer i in ms
+		  "141"    ; reset_timer(i)                  - resets the timer value of the specified timer to 0
