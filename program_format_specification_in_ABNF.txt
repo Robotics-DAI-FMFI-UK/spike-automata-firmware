@@ -118,6 +118,7 @@
                            ;                  - lock the processing task in init transition, end transition and active state(after last task or unlock() will be next control of conditions in transitions)
                   "35"     ; unlock()				                  
                            ;                  - unlock the processing task in init transition, end transition and active state(after every task will be control of conditions in transitions)
+		  "36"     ; reset_timer(i)                  - resets the timer value of the specified timer to 0
 
 <function-id> ::= "100" |  ; read()                          - read one char from BT console and return it as string of len 1
                   "101" |  ; read_line()                     - read one line from BT console and return it as string
@@ -160,4 +161,3 @@
                   "138" |  ; xor(boolean a, boolean b)       - logical xor of two boolean values
                   "139" |  ; not(boolean x)                  - logical not of a boolean value                                                      
 		  "140" |  ; timer(i)                        - outputs the current value of timer i in ms
-		  "141"    ; reset_timer(i)                  - resets the timer value of the specified timer to 0
